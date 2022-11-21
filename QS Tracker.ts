@@ -17,6 +17,7 @@
 //URL of Google Sheet. Create a new Google sheet that you want the data to be outputted to and paste the URL between then quotation marks below
 SHEETURL =
   'https://docs.google.com/spreadsheets/d/1sEulo0nFzxOWdAa5Ivyi9AOwGAE0/edit#gid=0'
+ID = '1MOkYCI0F_jP-eO2_rnrWv-icfgN-qjv9TNjnVKcBZUI'
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -36,8 +37,14 @@ function getDetailedReport(enums, metrics) {
     for (item in enums) {
       var m = metrics[metric]
       var e = enums[item]
+      console.log('metric', m)
+      console.log('enums', e)
       var query =
-        'SELECT Impressions FROM KEYWORDS_PERFORMANCE_REPORT WHERE %m = %e DURING YESTERDAY'
+        'SELECT metrics.impressions FROM keyword_view WHERE ' +
+        m +
+        ' = ' +
+        e +
+        ' AND segments.date DURING YESTERDAY'
       var temp = query.replace('%m', m).replace('%e', e)
       var report = AdWordsApp.report(temp).rows()
       var i = 0
@@ -94,9 +101,9 @@ function getDetailedReport(enums, metrics) {
     weightedAll[m] = weightedAll[m].toFixed(4)
   }
   var metrics_temp = [
-    'SearchPredictedCtr',
-    'PostClickQualityScore',
-    'CreativeQualityScore',
+    'ad_group_criterion.quality_info.search_predicted_ctr',
+    'ad_group_criterion.quality_info.post_click_quality_score',
+    'ad_group_criterion.quality_info.creative_quality_score',
   ]
   for (item in metrics_temp) {
     sheetRow.push(weightedAll[metrics_temp[item]])
@@ -108,7 +115,7 @@ function getTotalReport() {
   //Downloads a QS report and calculates weighted average. Returns a sheet-friendly row.
 
   var query =
-    'SELECT Impressions, QualityScore FROM KEYWORDS_PERFORMANCE_REPORT WHERE HasQualityScore = TRUE DURING YESTERDAY'
+    'SELECT metrics.impressions, ad_group_criterion.quality_info.quality_score FROM keyword_view WHERE segments.date DURING YESTERDAY'
   var report = AdWordsApp.report(query).rows()
   var result = {
     1: { impressions: 0, total: 0, weighted: 0 },
@@ -127,8 +134,12 @@ function getTotalReport() {
   var totalQs = 0
   while (report.hasNext()) {
     var row = report.next()
+    row['QualityScore'] = row['ad_group_criterion.quality_info.quality_score'] ?? 1
+    row['impressions'] = row['metrics.impressions']
+    console.log('row', row)
     var impr_part = parseInt(row['Impressions'])
-    var qs = row['QualityScore']
+    console.log('row', row)
+    var qs = row['QualityScore'] ?? 1
     result[qs]['impressions'] = result[qs]['impressions'] + impr_part
     result[qs]['total'] = result[qs]['total'] + 1
     impr = impr + impr_part
@@ -193,12 +204,18 @@ function createGraphs() {
   }
   var positions = [1, 4, 21, 38]
 
-  var sheet = SpreadsheetApp.openByUrl(SHEETURL).getSheetByName('dashboard')
-  var data = SpreadsheetApp.openByUrl(SHEETURL).getSheetByName('data')
+  var sheet = SpreadsheetApp.open(DriveApp.getFileById(ID)).getSheetByName(
+    'dashboard'
+  )
+  var data = SpreadsheetApp.open(DriveApp.getFileById(ID)).getSheetByName(
+    'data'
+  )
   var types = ['all', 'ctr', 'lp', 'ad']
   var subTypes = ['all', 'weighted']
   var xAxis = data.getRange('A1:A')
-  var dataBar = SpreadsheetApp.openByUrl(SHEETURL).getSheetByName('data-bar')
+  var dataBar = SpreadsheetApp.open(DriveApp.getFileById(ID)).getSheetByName(
+    'data-bar'
+  )
   var xAxisBar = dataBar.getRange('A1:C1')
 
   if (sheet.getCharts().length == 0) {
@@ -266,7 +283,7 @@ function createGraphs() {
 function prepareSheet() {
   //Prepares a new sheet by creating new tabs
 
-  var sheet = SpreadsheetApp.openByUrl(SHEETURL)
+  var sheet = SpreadsheetApp.open(DriveApp.getFileById(ID))
   if (sheet.getSheetByName('dashboard') === null) {
     try {
       sheet.insertSheet('dashboard')
@@ -291,7 +308,7 @@ function prepareSheet() {
 function formatRange() {
   //Formats decimals so they are displayed as %
 
-  var sheet = SpreadsheetApp.openByUrl(SHEETURL)
+  var sheet = SpreadsheetApp.open(DriveApp.getFileById(ID))
   sheet.getRange('data!B2:J').setNumberFormat('0%')
   sheet.getRange('data!N2:W').setNumberFormat('0%')
   sheet.getRange('data!A2:A').setNumberFormat('dd/mm/yyyy')
@@ -300,10 +317,12 @@ function formatRange() {
 function transpose() {
   //Creates a transposed version of the first and last days, used for bar charts
 
-  var sheet = SpreadsheetApp.openByUrl(SHEETURL).getSheetByName('data-bar')
+  var sheet = SpreadsheetApp.open(DriveApp.getFileById(ID)).getSheetByName(
+    'data-bar'
+  )
   var range = sheet.getRange('A:C')
   range.clear()
-  var lastRow = SpreadsheetApp.openByUrl(SHEETURL)
+  var lastRow = SpreadsheetApp.open(DriveApp.getFileById(ID))
     .getSheetByName('data')
     .getLastRow()
   sheet.getRange('A1:A1').setFormula('=TRANSPOSE(data!A1:AD1)')
@@ -316,7 +335,9 @@ function transpose() {
 function formatCells() {
   //Formats cells' size and fonts in the dashboard tab. Adds average quality scores as text
 
-  var sheet = SpreadsheetApp.openByUrl(SHEETURL).getSheetByName('dashboard')
+  var sheet = SpreadsheetApp.open(DriveApp.getFileById(ID)).getSheetByName(
+    'dashboard'
+  )
   var rows = [1]
   var cols_avg = ['Y', 'X']
   var cols = ['H', 'O']
@@ -362,11 +383,13 @@ function main() {
 
   var enums = ['BELOW_AVERAGE', 'AVERAGE', 'ABOVE_AVERAGE']
   var metrics = [
-    'SearchPredictedCtr',
-    'PostClickQualityScore',
-    'CreativeQualityScore',
+    'ad_group_criterion.quality_info.search_predicted_ctr',
+    'ad_group_criterion.quality_info.post_click_quality_score',
+    'ad_group_criterion.quality_info.creative_quality_score',
   ]
-  var sheet = SpreadsheetApp.openByUrl(SHEETURL).getSheetByName('data')
+  var sheet = SpreadsheetApp.open(DriveApp.getFileById(ID)).getSheetByName(
+    'data'
+  )
 
   Logger.log('Downloading detailed quality scores...')
   var detailedReport = getDetailedReport(enums, metrics)
