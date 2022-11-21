@@ -14,9 +14,9 @@
 
 //Control Panel
 
-//URL of Google Sheet. Create a new Google sheet that you want the data to be outputted to and paste the URL between then quotation marks below
-SHEETURL =
-  'https://docs.google.com/spreadsheets/d/1sEulo0nFzxOWdAa5Ivyi9AOwGAE0/edit#gid=0'
+//ID of Google Sheet. Create a new Google sheet that you want the data to be outputted to and paste the URL between then quotation marks below
+// UPDATE this to the actual Google Doc ID
+// SEE: https://stackoverflow.com/a/35210316
 ID = '1MOkYCI0F_jP-eO2_rnrWv-icfgN-qjv9TNjnVKcBZUI'
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
