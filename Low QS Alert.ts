@@ -90,9 +90,7 @@ function main() {
 
 function findKeywordsWithQSBelow(threshold) {
   var query =
-    'SELECT Id, AdGroupId, CampaignName, AdGroupName, Criteria, QualityScore, Labels' +
-    ' FROM KEYWORDS_PERFORMANCE_REPORT WHERE Status = "ENABLED" AND CampaignStatus = "ENABLED" AND AdGroupStatus = "ENABLED"' +
-    ' AND HasQualityScore = "TRUE" AND QualityScore <= ' +
+    'SELECT ad_group.id, ad_group_criterion.criterion_id, campaign.name, ad_group.name, ad_group_criterion.keyword.text, ad_group_criterion.quality_info.quality_score, ad_group.labels FROM keyword_view WHERE ad_group_criterion.status = "ENABLED" AND ad_group_criterion.quality_info.quality_score <= ' +
     threshold
   var report = AdWordsApp.report(query)
   var rows = report.rows()
