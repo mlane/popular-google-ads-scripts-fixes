@@ -30,10 +30,10 @@ function getDetailedReport(enums,metrics)
  var total_impr = 0
   for(metric in metrics)
  { 
- 	for(enum in enums)
+ 	for(item in enums)
     {
       	var m = metrics[metric]
-      	var e = enums[enum]
+      	var e = enums[item]
  		var query = "SELECT Impressions FROM KEYWORDS_PERFORMANCE_REPORT WHERE %m = %e DURING YESTERDAY"
       	var temp = query.replace('%m', m).replace('%e',e)
      	var report = AdWordsApp.report(temp).rows()
@@ -46,7 +46,7 @@ function getDetailedReport(enums,metrics)
         var impr_part = parseInt(row['Impressions'])
         impr = impr + impr_part
         }
-      result[metrics[metric] + '_' + enums[enum]] = {'impressions' : parseInt(impr), 'total' : parseInt(i)}
+      result[metrics[metric] + '_' + enums[item]] = {'impressions' : parseInt(impr), 'total' : parseInt(i)}
       total = total + i
       total_impr = total_impr + impr 
     }
@@ -58,10 +58,10 @@ var sheetRow = []
   
 for(metric in metrics)
 {
-  for(enum in enums)
+  for(item in enums)
   {
     m = metrics[metric]
-    e = enums[enum]
+    e = enums[item]
     var single = result[m + '_' + e]
     single['total'] = (single['total']/total).toFixed(5)
     sheetRow.push(result[m+'_'+e]['total'])
@@ -87,9 +87,9 @@ var weightedAll = {}
 for(metric in metrics)
 {m = metrics[metric]
   weightedAll[m] = 0
-  for(enum in enums)
+  for(item in enums)
   {
-  e = enums[enum]
+  e = enums[item]
   var single = result[m + '_' + e]
   weightedAll[m] = weightedAll[m] + single['weighted']
   }
