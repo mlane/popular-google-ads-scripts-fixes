@@ -90,7 +90,7 @@ function main() {
 
 function findKeywordsWithQSBelow(threshold) {
   var query =
-    'SELECT ad_group.id, ad_group_criterion.criterion_id, campaign.name, ad_group.name, ad_group_criterion.keyword.text, ad_group_criterion.quality_info.quality_score, ad_group.labels FROM keyword_view WHERE ad_group_criterion.status = "ENABLED" AND ad_group_criterion.quality_info.quality_score <= ' +
+    'SELECT ad_group.id, ad_group_criterion.criterion_id, campaign.name, ad_group.name, ad_group_criterion.keyword.text, ad_group_criterion.quality_info.quality_score, ad_group_criterion.labels FROM keyword_view WHERE ad_group_criterion.status = "ENABLED" AND ad_group_criterion.quality_info.quality_score <= ' +
     threshold
   var report = AdWordsApp.report(query)
   var rows = report.rows()
@@ -98,13 +98,18 @@ function findKeywordsWithQSBelow(threshold) {
   var lowQSKeywords = []
   while (rows.hasNext()) {
     var row = rows.next()
+    console.log(row)
     var lowQSKeyword = {
-      campaignName: row['CampaignName'],
-      adGroupName: row['AdGroupName'],
-      keywordText: row['Criteria'],
-      labels: row['Labels'].trim() === '--' ? [] : JSON.parse(row['Labels']),
-      uniqueId: [row['AdGroupId'], row['Id']],
-      qualityScore: row['QualityScore'],
+      campaignName: row['campaign.name'],
+      adGroupName: row['ad_group.name'],
+      keywordText: row['ad_group_criterion'],
+      labels:
+        row['ad_group_criterion.labels'] &&
+        row['ad_group_criterion.labels']?.trim() !== '--'
+          ? JSON.parse(row['ad_group_criterion.labels'])
+          : [],
+      uniqueId: [row['ad_group.id'], row['ad_group_criterion.criterion_id']],
+      qualityScore: row['ad_group_criterion.quality_info.quality_score'],
     }
     lowQSKeywords.push(lowQSKeyword)
   }
