@@ -17,7 +17,15 @@
 //ID of Google Sheet. Create a new Google sheet that you want the data to be outputted to and paste the URL between then quotation marks below
 // UPDATE this to the actual Google Doc ID
 // SEE: https://stackoverflow.com/a/35210316
-ID = '1MOkYCI0F_jP-eO2_rnrWv-icfgN-qjv9TNjnVKcBZUI'
+const ID = '1tKY7AH-qIHIKwJCqIBHZT1x4gHqfm5zbHCGGz2wEf8Q'
+
+const LIMIT = false
+// const LIMIT = 5
+
+const QUERY_START =
+  'SELECT metrics.impressions, ad_group_criterion.quality_info.quality_score FROM keyword_view'
+
+const QUERY_END = `segments.date DURING YESTERDAY${LIMIT && ' LIMIT ' + LIMIT}`
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -29,7 +37,7 @@ function getDetailedReport(enums, metrics) {
   result = {
     SearchPredictedCtr_BELOW_AVERAGE: 1,
     SearchPredictedCtr_AVERAGE: 2,
-    SearchPredictedCtr_ABOVE_AVERAGE: 3,
+    0: 3,
   }
   var total = 0
   var total_impr = 0
@@ -39,12 +47,7 @@ function getDetailedReport(enums, metrics) {
       var e = enums[item]
       console.log('metric', m)
       console.log('enums', e)
-      var query =
-        'SELECT metrics.impressions FROM keyword_view WHERE ' +
-        m +
-        ' = ' +
-        e +
-        ' AND segments.date DURING YESTERDAY'
+      var query = `${QUERY_START} WHERE ${m} = ${e} AND ${QUERY_END}`
       var temp = query.replace('%m', m).replace('%e', e)
       var report = AdWordsApp.report(temp).rows()
       var i = 0
@@ -53,7 +56,7 @@ function getDetailedReport(enums, metrics) {
       while (report.hasNext()) {
         row = report.next()
         i = i + 1
-        var impr_part = parseInt(row['Impressions'])
+        var impr_part = parseInt(row['metrics.impressions'])
         impr = impr + impr_part
       }
       result[metrics[metric] + '_' + enums[item]] = {
@@ -77,11 +80,11 @@ function getDetailedReport(enums, metrics) {
       single['total'] = (single['total'] / total).toFixed(5)
       sheetRow.push(result[m + '_' + e]['total'])
       if (e == 'BELOW_AVERAGE') {
-        var weighted = 1 * (single['impressions'] / total_impr)
+        var weighted = 1 * (single['metrics.impressions'] / total_impr)
       } else if (e == 'AVERAGE') {
-        var weighted = 2 * (single['impressions'] / total_impr)
+        var weighted = 2 * (single['metrics.impressions'] / total_impr)
       } else if (e == 'ABOVE_AVERAGE') {
-        var weighted = 3 * (single['impressions'] / total_impr)
+        var weighted = 3 * (single['metrics.impressions'] / total_impr)
       }
 
       single['weighted'] = weighted
@@ -113,9 +116,7 @@ function getDetailedReport(enums, metrics) {
 
 function getTotalReport() {
   //Downloads a QS report and calculates weighted average. Returns a sheet-friendly row.
-
-  var query =
-    'SELECT metrics.impressions, ad_group_criterion.quality_info.quality_score FROM keyword_view WHERE segments.date DURING YESTERDAY'
+  var query = `${QUERY_START} WHERE ${QUERY_END}`
   var report = AdWordsApp.report(query).rows()
   var result = {
     1: { impressions: 0, total: 0, weighted: 0 },
@@ -134,13 +135,10 @@ function getTotalReport() {
   var totalQs = 0
   while (report.hasNext()) {
     var row = report.next()
-    row['QualityScore'] = row['ad_group_criterion.quality_info.quality_score'] ?? 1
-    row['impressions'] = row['metrics.impressions']
-    console.log('row', row)
-    var impr_part = parseInt(row['Impressions'])
-    console.log('row', row)
-    var qs = row['QualityScore'] ?? 1
-    result[qs]['impressions'] = result[qs]['impressions'] + impr_part
+    var impr_part = parseInt(row['metrics.impressions'])
+    var qs = row['ad_group_criterion.quality_info.quality_score'] ?? 1
+    result[qs]['metrics.impressions'] =
+      result[qs]['metrics.impressions'] + impr_part
     result[qs]['total'] = result[qs]['total'] + 1
     impr = impr + impr_part
     var total = total + 1
@@ -151,7 +149,7 @@ function getTotalReport() {
   var weighted = 0
   for (place in keys) {
     var key = keys[place]
-    var weighted_part = (result[key]['impressions'] / impr) * key
+    var weighted_part = (result[key]['metrics.impressions'] / impr) * key
     result[key]['total'] = (result[key]['total'] / total).toFixed(4)
     weighted = weighted + weighted_part
   }
