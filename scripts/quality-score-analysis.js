@@ -17,55 +17,58 @@
  */
 
 // Path to the folder in Google Drive where all the reports are to be created
-var REPORTS_FOLDER_PATH = 'Quality Score Analysis'
+const REPORTS_FOLDER_PATH = 'Quality Score Analysis'
 
 // Specify a date range for the report
-var DATE_RANGE = 'LAST_7_DAYS' // Other allowed values are: LAST_<NUM>_DAYS (Ex: LAST_90_DAYS) or TODAY, YESTERDAY, THIS_WEEK_SUN_TODAY, THIS_WEEK_MON_TODAY, LAST_WEEK, LAST_WEEK, LAST_BUSINESS_WEEK, LAST_WEEK_SUN_SAT, THIS_MONTH, LAST_MONTH
+const DATE_RANGE = 'LAST_7_DAYS' // Other allowed values are: LAST_<NUM>_DAYS (Ex: LAST_90_DAYS) or TODAY, YESTERDAY, THIS_WEEK_SUN_TODAY, THIS_WEEK_MON_TODAY, LAST_WEEK, LAST_WEEK, LAST_BUSINESS_WEEK, LAST_WEEK_SUN_SAT, THIS_MONTH, LAST_MONTH
 
 // Or specify a custom date range. Format is: yyyy-mm-dd
-var USE_CUSTOM_DATE_RANGE = false
-var START_DATE = '<Date in yyyy-mm-dd format>' // Example "2016-02-01"
-var END_DATE = '<Date in yyyy-mm-dd format>' // Example "2016-02-29"
+const USE_CUSTOM_DATE_RANGE = false
+const START_DATE = '<Date in yyyy-mm-dd format>' // Example "2016-02-01"
+const END_DATE = '<Date in yyyy-mm-dd format>' // Example "2016-02-29"
 
 // Set this to true to only look at currently active campaigns.
 // Set to false to include campaigns that had impressions but are currently paused.
-var IGNORE_PAUSED_CAMPAIGNS = true
+const IGNORE_PAUSED_CAMPAIGNS = true
 
 // Set this to true to only look at currently active ad groups.
 // Set to false to include ad groups that had impressions but are currently paused.
-var IGNORE_PAUSED_ADGROUPS = true
+const IGNORE_PAUSED_ADGROUPS = true
 
-var IGNORE_PAUSED_KEYWORDS = true
-var REMOVE_ZERO_IMPRESSIONS_KW = true
+const IGNORE_PAUSED_KEYWORDS = true
+const REMOVE_ZERO_IMPRESSIONS_KW = true
 
 // Number of top keywords (by impressions) to export to spreadsheet
-var MAX_KEYWORDS = 1000000
+const MAX_KEYWORDS = 1000000
 
 /*-- More filter for MCC account --*/
 //Is your account a MCC account
-var IS_MCC_ACCOUNT = true
+const IS_MCC_ACCOUNT = true
 
-var FILTER_ACCOUNTS_BY_LABEL = false
-var ACCOUNT_LABEL_TO_SELECT = 'INSERT_LABEL_NAME_HERE'
+const FILTER_ACCOUNTS_BY_LABEL = false
+const ACCOUNT_LABEL_TO_SELECT = 'INSERT_LABEL_NAME_HERE'
 
-var FILTER_ACCOUNTS_BY_IDS = false
-var ACCOUNT_IDS_TO_SELECT = ['INSERT_ACCOUNT_ID_HERE', 'INSERT_ACCOUNT_ID_HERE']
+const FILTER_ACCOUNTS_BY_IDS = false
+const ACCOUNT_IDS_TO_SELECT = [
+  'INSERT_ACCOUNT_ID_HERE',
+  'INSERT_ACCOUNT_ID_HERE',
+]
 /*---------------------------------*/
 
 //The script is expected to work with following API version
-var API_VERSION = {
+const API_VERSION = {
   apiVersion: 'v201809',
 }
 //////////////////////////////////////////////////////////////////////////////
 function main() {
-  var reportsFolder = getFolder(REPORTS_FOLDER_PATH)
+  const reportsFolder = getFolder(REPORTS_FOLDER_PATH)
 
   if (!IS_MCC_ACCOUNT) {
     processCurrentAccount(reportsFolder)
   } else {
-    var childAccounts = getManagedAccounts()
+    const childAccounts = getManagedAccounts()
     while (childAccounts.hasNext()) {
-      var childAccount = childAccounts.next()
+      const childAccount = childAccounts.next()
       MccApp.select(childAccount)
       processCurrentAccount(reportsFolder)
     }
@@ -81,7 +84,7 @@ function main() {
 }
 
 function getManagedAccounts() {
-  var accountSelector = MccApp.accounts()
+  let accountSelector = MccApp.accounts()
   if (FILTER_ACCOUNTS_BY_IDS) {
     accountSelector = accountSelector.withIds(ACCOUNT_IDS_TO_SELECT)
   }
@@ -94,28 +97,28 @@ function getManagedAccounts() {
 }
 
 function processCurrentAccount(reportsFolder) {
-  var adWordsAccount = AdWordsApp.currentAccount()
-  var spreadsheet = getReportSpreadsheet(reportsFolder, adWordsAccount)
+  const adWordsAccount = AdWordsApp.currentAccount()
+  const spreadsheet = getReportSpreadsheet(reportsFolder, adWordsAccount)
 
-  var accountName = adWordsAccount.getName()
-  var currencyCode = adWordsAccount.getCurrencyCode()
+  const accountName = adWordsAccount.getName()
+  const currencyCode = adWordsAccount.getCurrencyCode()
   Logger.log('Accesing AdWord account: ' + accountName)
   Logger.log('Fetching data from AdWords..')
-  var keywordReport = getKeywordReport()
+  const keywordReport = getKeywordReport()
 
   Logger.log('Computing..')
-  var keywordArray = compute(keywordReport)
-  var summary = computeSummary(keywordArray)
+  const keywordArray = compute(keywordReport)
+  const summary = computeSummary(keywordArray)
 
   Logger.log('Exporting results to spreadsheet..')
-  var dateString = Utilities.formatDate(
+  const dateString = Utilities.formatDate(
     new Date(),
     adWordsAccount.getTimeZone(),
     'yyyyMMdd'
   )
   // Export keyword level stats to a spreadsheet
-  var newSheetName = dateString + '-Details'
-  var sheet = spreadsheet.getSheetByName(newSheetName)
+  const newSheetName = dateString + '-Details'
+  let sheet = spreadsheet.getSheetByName(newSheetName)
   if (sheet != null) {
     clearDataAndCharts(sheet)
   } else {
@@ -126,8 +129,8 @@ function processCurrentAccount(reportsFolder) {
 
   Logger.log('Exporting summary & charts to spreadsheet..')
   // Export summary data and charts to another sheet
-  var newSummarySheetName = dateString + '-Summary'
-  var summarySheet = spreadsheet.getSheetByName(newSummarySheetName)
+  const newSummarySheetName = dateString + '-Summary'
+  let summarySheet = spreadsheet.getSheetByName(newSummarySheetName)
   if (summarySheet != null) {
     clearDataAndCharts(summarySheet)
   } else {
@@ -137,10 +140,10 @@ function processCurrentAccount(reportsFolder) {
 }
 
 function compute(keywordReport) {
-  var reportIterator = keywordReport.rows()
-  var keywordArray = new Array()
+  const reportIterator = keywordReport.rows()
+  const keywordArray = new Array()
   while (reportIterator.hasNext()) {
-    var kw = reportIterator.next()
+    const kw = reportIterator.next()
     keywordArray.push(kw)
   }
   Logger.log('Total keywords found: ' + keywordArray.length)
@@ -152,9 +155,9 @@ function compute(keywordReport) {
 }
 
 function getKeywordReport() {
-  var dateRange = getDateRange(',')
+  const dateRange = getDateRange(',')
 
-  var whereStatements = ''
+  let whereStatements = ''
   if (IGNORE_PAUSED_CAMPAIGNS) {
     whereStatements += 'AND CampaignStatus = ENABLED '
   } else {
@@ -177,7 +180,7 @@ function getKeywordReport() {
     whereStatements += 'AND Impressions > 0 '
   }
 
-  var query =
+  const query =
     'SELECT CampaignId, AdGroupId, Id, CampaignName, AdGroupName, Criteria, KeywordMatchType, QualityScore, SearchPredictedCtr, CreativeQualityScore, PostClickQualityScore,  Clicks, Impressions, Ctr, AverageCpc, Cost, Conversions, CostPerConversion, AveragePosition ' +
     'FROM  KEYWORDS_PERFORMANCE_REPORT ' +
     'WHERE IsNegative = FALSE AND HasQualityScore=true ' +
@@ -189,21 +192,21 @@ function getKeywordReport() {
 }
 
 function getDateRange(seperator) {
-  var dateRange = DATE_RANGE
+  let dateRange = DATE_RANGE
   if (USE_CUSTOM_DATE_RANGE) {
     dateRange =
       START_DATE.replace(/-/g, '') + seperator + END_DATE.replace(/-/g, '')
   } else if (dateRange.match(/LAST_(.*)_DAYS/)) {
-    var adWordsAccount = AdWordsApp.currentAccount()
-    var MILLIS_PER_DAY = 1000 * 60 * 60 * 24
-    var numDaysBack = parseInt(dateRange.match(/LAST_(.*)_DAYS/)[1])
-    var today = new Date()
-    var endDate = Utilities.formatDate(
+    const adWordsAccount = AdWordsApp.currentAccount()
+    const MILLIS_PER_DAY = 1000 * 60 * 60 * 24
+    const numDaysBack = parseInt(dateRange.match(/LAST_(.*)_DAYS/)[1])
+    const today = new Date()
+    const endDate = Utilities.formatDate(
       new Date(today.getTime() - MILLIS_PER_DAY),
       adWordsAccount.getTimeZone(),
       'yyyyMMdd'
     ) // Yesterday
-    var startDate = Utilities.formatDate(
+    const startDate = Utilities.formatDate(
       new Date(today.getTime() - MILLIS_PER_DAY * numDaysBack),
       adWordsAccount.getTimeZone(),
       'yyyyMMdd'
@@ -215,12 +218,16 @@ function getDateRange(seperator) {
 
 function getComparator(sortFieldName, reverse) {
   return function (obj1, obj2) {
-    var retVal = 0
-    var val1 = parseInt(obj1[sortFieldName], 10)
-    var val2 = parseInt(obj2[sortFieldName], 10)
-    if (val1 < val2) retVal = -1
-    else if (val1 > val2) retVal = 1
-    else retVal = 0
+    let retVal = 0
+    const val1 = parseInt(obj1[sortFieldName], 10)
+    const val2 = parseInt(obj2[sortFieldName], 10)
+    if (val1 < val2) {
+      retVal = -1
+    } else if (val1 > val2) {
+      retVal = 1
+    } else {
+      retVal = 0
+    }
 
     if (reverse) {
       retVal = -1 * retVal
@@ -230,9 +237,9 @@ function getComparator(sortFieldName, reverse) {
 }
 
 function exportToSpreadsheet(keywordArray, sheet, accountName) {
-  var rowsArray = new Array()
-  for (var i = 0; i < keywordArray.length; i++) {
-    var kw = keywordArray[i]
+  const rowsArray = new Array()
+  for (let i = 0; i < keywordArray.length; i++) {
+    const kw = keywordArray[i]
     if (kw['SearchPredictedCtr'] != 'Not applicable') {
       rowsArray.push([
         kw['CampaignName'],
@@ -255,9 +262,8 @@ function exportToSpreadsheet(keywordArray, sheet, accountName) {
     }
   }
 
-  var colTitleColor = '#03cfcc' // Aqua
-  var summaryRowColor = '#D3D3D3' // Grey
-  var headers = [
+  const colTitleColor = '#03cfcc' // Aqua
+  const headers = [
     'Campaign Name',
     'Ad Group Name',
     'Keyword',
@@ -294,15 +300,15 @@ function exportToSpreadsheet(keywordArray, sheet, accountName) {
     sheet.getRange(1, 12, rowsArray.length).setNumberFormat('#0.0')
     sheet.getRange(1, 13, rowsArray.length).setNumberFormat('#,##0')
   }
-  for (var i = 1; i <= headers.length; i++) {
+  for (let i = 1; i <= headers.length; i++) {
     sheet.autoResizeColumn(i)
   }
   sheet.setFrozenRows(1)
 }
 
 function applyColorCoding(sheet, rowsArray, colIdx, rowOffset) {
-  for (var i = 0; i < rowsArray.length; i++) {
-    var bgColor = getBgColorFor(rowsArray[i][colIdx])
+  for (let i = 0; i < rowsArray.length; i++) {
+    const bgColor = getBgColorFor(rowsArray[i][colIdx])
     sheet.getRange(i + rowOffset + 1, colIdx + 1).setBackground(bgColor)
   }
 }
@@ -315,8 +321,8 @@ function getBgColorFor(value) {
 
 /* ******************************************* */
 function computeSummary(keywordArray) {
-  var summary = getNewEmptySummaryObject()
-  for (var i = 0; i < keywordArray.length; i++) {
+  const summary = getNewEmptySummaryObject()
+  for (let i = 0; i < keywordArray.length; i++) {
     addStats(summary, keywordArray[i])
   }
   setAverages(summary)
@@ -324,10 +330,10 @@ function computeSummary(keywordArray) {
 }
 
 function addStats(summary, kw) {
-  var clicks = cleanAndParseInt(kw['Clicks'], 10)
-  var impressions = cleanAndParseInt(kw['Impressions'], 10)
-  var cost = cleanAndParseFloat(kw['Cost'], 10)
-  var conversions = cleanAndParseFloat(kw['Conversions'], 10)
+  const clicks = cleanAndParseInt(kw['Clicks'], 10)
+  const impressions = cleanAndParseInt(kw['Impressions'], 10)
+  const cost = cleanAndParseFloat(kw['Cost'], 10)
+  const conversions = cleanAndParseFloat(kw['Conversions'], 10)
   groupByValue(
     clicks,
     impressions,
@@ -363,7 +369,7 @@ function addStats(summary, kw) {
 }
 
 function groupByValue(clicks, impressions, conversions, cost, map, key) {
-  var aggStats = map[key]
+  let aggStats = map[key]
   if (!aggStats) {
     aggStats = getNewEmptyStatsObject()
     map[key] = aggStats
@@ -376,9 +382,9 @@ function groupByValue(clicks, impressions, conversions, cost, map, key) {
 
 function setAverages(summary) {
   for (groupByName in summary) {
-    var map = summary[groupByName]
+    const map = summary[groupByName]
     for (key in map) {
-      var stats = map[key]
+      const stats = map[key]
       if (stats['Clicks'] > 0) {
         stats['AverageCpc'] = stats['Cost'] / stats['Clicks']
       }
@@ -409,7 +415,7 @@ function getNewEmptySummaryObject() {
 }
 
 function exportSummaryStatsToSpreadsheet(summary, sheet) {
-  var startRow = 1
+  let startRow = 1
   exportAggStats(
     sheet,
     summary.byQS,
@@ -420,12 +426,12 @@ function exportSummaryStatsToSpreadsheet(summary, sheet) {
     Charts.ChartType.COLUMN
   )
 
-  var qsParamValues = ['Above average', 'Average', 'Below average']
-  var chartOptions = {
+  const qsParamValues = ['Above average', 'Average', 'Below average']
+  const chartOptions = {
     slices: {
-      '0': { color: '#00ff00' },
-      '1': { color: '#3366cc' },
-      '2': { color: '#dc3912' },
+      0: { color: '#00ff00' },
+      1: { color: '#3366cc' },
+      2: { color: '#dc3912' },
     },
   }
   exportAggStats(
@@ -470,10 +476,10 @@ function exportAggStats(
   chartType,
   chartOptions
 ) {
-  var rowsArray = new Array()
-  for (var i = 0; i < keyArray.length; i++) {
-    var key = keyArray[i]
-    var stats = map[key]
+  const rowsArray = new Array()
+  for (let i = 0; i < keyArray.length; i++) {
+    const key = keyArray[i]
+    const stats = map[key]
     if (!stats) {
       stats = getNewEmptyStatsObject()
     }
@@ -488,8 +494,8 @@ function exportAggStats(
     ])
   }
 
-  var headerRow = startRow
-  var headers = [
+  const headerRow = startRow
+  const headers = [
     keyColHeader,
     'Clicks',
     'Impressions',
@@ -504,7 +510,7 @@ function exportAggStats(
     .setBackground(bgColor)
     .setFontWeight('BOLD')
 
-  var firstDataRow = headerRow + 1
+  const firstDataRow = headerRow + 1
   sheet
     .getRange(firstDataRow, 1, rowsArray.length, headers.length)
     .setValues(rowsArray)
@@ -517,7 +523,7 @@ function exportAggStats(
   sheet.getRange(firstDataRow, 6, rowsArray.length).setNumberFormat('#,##0')
   sheet.getRange(firstDataRow, 7, rowsArray.length).setNumberFormat('#,##0.00')
 
-  for (var i = 1; i <= headers.length; i++) {
+  for (let i = 1; i <= headers.length; i++) {
     sheet.autoResizeColumn(i)
   }
 
@@ -540,13 +546,13 @@ function drawChart(
   chartOptions
 ) {
   // Creates a column chart for values in range
-  var colName1 = 'Impressions'
-  var range1 = sheet.getRange(startRow + 1, 1, numOfRows, 1)
-  var range2 = sheet.getRange(startRow + 1, 3, numOfRows, 1)
+  const colName1 = 'Impressions'
+  const range1 = sheet.getRange(startRow + 1, 1, numOfRows, 1)
+  const range2 = sheet.getRange(startRow + 1, 3, numOfRows, 1)
 
-  var chartBuilder = sheet.newChart()
+  const chartBuilder = sheet.newChart()
   chartBuilder.addRange(range1).addRange(range2).setChartType(chartType)
-  var chartTitle = colName1 + ' Vs. ' + colName2
+  let chartTitle = colName1 + ' Vs. ' + colName2
   if (chartType === Charts.ChartType.PIE) {
     chartTitle = colName1 + ' Chart for ' + colName2
   }
@@ -571,24 +577,24 @@ function drawChart(
  * Creates a new spreadsheet if doesn't exist.
  */
 function getReportSpreadsheet(folder, adWordsAccount) {
-  var accountId = adWordsAccount.getCustomerId()
-  var accountName = adWordsAccount.getName()
-  var spreadsheet = undefined
-  var files = folder.searchFiles(
+  const accountId = adWordsAccount.getCustomerId()
+  const accountName = adWordsAccount.getName()
+  let spreadsheet = undefined
+  const files = folder.searchFiles(
     'mimeType = "application/vnd.google-apps.spreadsheet" and title contains "' +
       accountId +
       '"'
   )
   if (files.hasNext()) {
-    var file = files.next()
+    const file = files.next()
     spreadsheet = SpreadsheetApp.open(file)
   }
 
   if (!spreadsheet) {
-    var fileName = accountName + ' (' + accountId + ')'
+    const fileName = accountName + ' (' + accountId + ')'
     spreadsheet = SpreadsheetApp.create(fileName)
-    var file = DriveApp.getFileById(spreadsheet.getId())
-    var oldFolder = file.getParents().next()
+    const file = DriveApp.getFileById(spreadsheet.getId())
+    const oldFolder = file.getParents().next()
     folder.addFile(file)
     oldFolder.removeFile(file)
   }
@@ -600,15 +606,15 @@ function getReportSpreadsheet(folder, adWordsAccount) {
  * Creates the folder and all the internediate folders if needed.
  */
 function getFolder(folderPath) {
-  var folder = DriveApp.getRootFolder()
-  var folderNamesArray = folderPath.split('/')
-  for (var idx = 0; idx < folderNamesArray.length; idx++) {
-    var newFolderName = folderNamesArray[idx]
+  let folder = DriveApp.getRootFolder()
+  const folderNamesArray = folderPath.split('/')
+  for (let idx = 0; idx < folderNamesArray.length; idx++) {
+    const newFolderName = folderNamesArray[idx]
     // Skip if new folder name is empty (possiblly due to slash at the end)
     if (newFolderName.trim() == '') {
       continue
     }
-    var folderIterator = folder.getFoldersByName(newFolderName)
+    const folderIterator = folder.getFoldersByName(newFolderName)
     if (folderIterator.hasNext()) {
       folder = folderIterator.next()
     } else {
@@ -621,8 +627,8 @@ function getFolder(folderPath) {
 
 function clearDataAndCharts(sheet) {
   sheet.clear()
-  var charts = sheet.getCharts()
-  for (var i = 0; i < charts.length; i++) {
+  const charts = sheet.getCharts()
+  for (let i = 0; i < charts.length; i++) {
     sheet.removeChart(charts[i])
   }
 }
@@ -654,15 +660,15 @@ function cleanValueStr(valueStr) {
  */
 function trackEventInAnalytics() {
   // Create the random UUID from 30 random hex numbers gets them into the format xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx (with y being 8, 9, a, or b).
-  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
     /[xy]/g,
     function (c) {
-      var r = (Math.random() * 16) | 0,
+      const r = (Math.random() * 16) | 0,
         v = c == 'x' ? r : (r & 0x3) | 0x8
       return v.toString(16)
     }
   )
-  var url =
+  const url =
     'http://www.google-analytics.com/collect?v=1&t=event&tid=UA-46662882-1&cid=' +
     uuid +
     '&ec=AdWords%20Scripts&ea=Script%20Execution&el=QS%20Analysis'

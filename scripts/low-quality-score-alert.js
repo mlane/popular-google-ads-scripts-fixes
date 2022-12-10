@@ -15,21 +15,21 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //Options
 
-var EMAIL_ADDRESSES = ['alice@example.com', 'bob@example.co.uk']
+const EMAIL_ADDRESSES = []
 // The address or addresses that will be emailed a list of low QS keywords
-// eg ["alice@example.com", "bob@example.co.uk"] or ["eve@example.org"]
+// e.g. alice@example.com or bob@example.co.uk
 
-var QS_THRESHOLD = 5
+const QS_THRESHOLD = 5
 // Keywords with quality score less than or equal to this number are
 // considered 'low QS'
 
-var LABEL_KEYWORDS = true
+const LABEL_KEYWORDS = true
 // If this is true, low QS keywords will be automatically labelled
 
-var LOW_QS_LABEL_NAME = 'Low QS Keyword'
+const LOW_QS_LABEL_NAME = 'Low QS Keyword'
 // The name of the label applied to low QS keywords
 
-var PAUSE_KEYWORDS = false
+const PAUSE_KEYWORDS = false
 // If this is true, low QS keywords will be automatically paused
 // Set to false if you want them to stay active.
 
@@ -41,7 +41,7 @@ function main() {
   Logger.log('Pause Keywords: ' + PAUSE_KEYWORDS)
   Logger.log('Label Keywords: ' + LABEL_KEYWORDS)
 
-  var keywords = findKeywordsWithQSBelow(QS_THRESHOLD)
+  const keywords = findKeywordsWithQSBelow(QS_THRESHOLD)
   Logger.log('Found ' + keywords.length + ' keywords with low quality score')
 
   if (!labelExists(LOW_QS_LABEL_NAME)) {
@@ -55,7 +55,7 @@ function main() {
     )
   }
 
-  var mutations = [
+  const mutations = [
     {
       enabled: PAUSE_KEYWORDS,
       callback: function (keyword) {
@@ -72,8 +72,8 @@ function main() {
     },
   ]
 
-  var chunkSize = 10000
-  var chunkedKeywords = chunkList(keywords, chunkSize)
+  const chunkSize = 10000
+  const chunkedKeywords = chunkList(keywords, chunkSize)
 
   Logger.log('Making changes to keywords..')
   chunkedKeywords.forEach(function (keywordChunk) {
@@ -89,17 +89,16 @@ function main() {
 }
 
 function findKeywordsWithQSBelow(threshold) {
-  var query =
+  const query =
     'SELECT ad_group.id, ad_group_criterion.criterion_id, campaign.name, ad_group.name, ad_group_criterion.keyword.text, ad_group_criterion.quality_info.quality_score, ad_group_criterion.labels FROM keyword_view WHERE ad_group_criterion.status = "ENABLED" AND ad_group_criterion.quality_info.quality_score <= ' +
     threshold
-  var report = AdWordsApp.report(query)
-  var rows = report.rows()
+  const report = AdWordsApp.report(query)
+  const rows = report.rows()
 
-  var lowQSKeywords = []
+  const lowQSKeywords = []
   while (rows.hasNext()) {
-    var row = rows.next()
-    console.log(row)
-    var lowQSKeyword = {
+    const row = rows.next()
+    const lowQSKeyword = {
       campaignName: row['campaign.name'],
       adGroupName: row['ad_group.name'],
       keywordText: row['ad_group_criterion'],
@@ -117,30 +116,30 @@ function findKeywordsWithQSBelow(threshold) {
 }
 
 function labelExists(labelName) {
-  var condition = Utilities.formatString('LabelName = "%s"', labelName)
+  const condition = Utilities.formatString('LabelName = "%s"', labelName)
   return AdWordsApp.labels().withCondition(condition).get().hasNext()
 }
 
 function chunkList(list, chunkSize) {
-  var chunks = []
-  for (var i = 0; i < list.length; i += chunkSize) {
+  const chunks = []
+  for (let i = 0; i < list.length; i += chunkSize) {
     chunks.push(list.slice(i, i + chunkSize))
   }
   return chunks
 }
 
 function mutateKeywords(keywords, mutations) {
-  var keywordIds = keywords.map(function (keyword) {
+  const keywordIds = keywords.map(function (keyword) {
     return keyword['uniqueId']
   })
 
-  var mutationsToApply = getMutationsToApply(mutations)
-  var adwordsKeywords = AdWordsApp.keywords().withIds(keywordIds).get()
+  const mutationsToApply = getMutationsToApply(mutations)
+  const adwordsKeywords = AdWordsApp.keywords().withIds(keywordIds).get()
 
-  var i = 0
+  let i = 0
   while (adwordsKeywords.hasNext()) {
-    var currentKeywordLabels = keywords[i]['labels']
-    var adwordsKeyword = adwordsKeywords.next()
+    const currentKeywordLabels = keywords[i]['labels']
+    const adwordsKeyword = adwordsKeywords.next()
 
     mutationsToApply.forEach(function (mutate) {
       mutate(adwordsKeyword, currentKeywordLabels)
@@ -150,7 +149,7 @@ function mutateKeywords(keywords, mutations) {
 }
 
 function getMutationsToApply(mutations) {
-  var enabledMutations = mutations.filter(function (mutation) {
+  const enabledMutations = mutations.filter(function (mutation) {
     return mutation['enabled']
   })
 
@@ -160,8 +159,8 @@ function getMutationsToApply(mutations) {
 }
 
 function sendEmail(keywords) {
-  var subject = 'Low Quality Keywords Paused'
-  var htmlBody =
+  const subject = 'Low Quality Keywords Paused'
+  const htmlBody =
     '<p>Keywords with a quality score of less than ' +
     QS_THRESHOLD +
     'found.<p>' +
@@ -178,15 +177,17 @@ function sendEmail(keywords) {
     '</ul>' +
     renderTable(keywords)
 
-  MailApp.sendEmail({
-    to: EMAIL_ADDRESSES.join(','),
-    subject: subject,
-    htmlBody: htmlBody,
-  })
+  if (EMAIL_ADDRESSES.length) {
+    MailApp.sendEmail({
+      to: EMAIL_ADDRESSES.join(','),
+      subject: subject,
+      htmlBody: htmlBody,
+    })
+  }
 }
 
 function renderTable(keywords) {
-  var header =
+  const header =
     '<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">' +
     '<thead><tr>' +
     '<th>Campaign Name</th>' +
@@ -195,7 +196,7 @@ function renderTable(keywords) {
     '<th>Quality Score</th>' +
     '</tr></thead><tbody>'
 
-  var rows = keywords.reduce(function (accumulator, keyword) {
+  const rows = keywords.reduce(function (accumulator, keyword) {
     return (
       accumulator +
       '<tr><td>' +
@@ -209,8 +210,8 @@ function renderTable(keywords) {
     )
   }, '')
 
-  var footer = '</tbody></table>'
+  const footer = '</tbody></table>'
 
-  var table = header + rows + footer
+  const table = header + rows + footer
   return table
 }
