@@ -25,7 +25,9 @@ const LIMIT = false
 const QUERY_START =
   'SELECT metrics.impressions, ad_group_criterion.quality_info.quality_score FROM keyword_view'
 
-const QUERY_END = `segments.date DURING YESTERDAY${LIMIT && ' LIMIT ' + LIMIT}`
+const QUERY_END = `segments.date DURING YESTERDAY${
+  LIMIT ? ' LIMIT ' + LIMIT : ''
+}`
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
