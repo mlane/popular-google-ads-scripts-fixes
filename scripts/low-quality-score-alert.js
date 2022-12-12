@@ -15,7 +15,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //Options
 
-const EMAIL_ADDRESSES = []
+const EMAIL_ADDRESSES = ['rcasperson@travelpassgroup.com']
 // The address or addresses that will be emailed a list of low QS keywords
 // e.g. alice@example.com or bob@example.co.uk
 
@@ -98,14 +98,15 @@ function findKeywordsWithQSBelow(threshold) {
   const lowQSKeywords = []
   while (rows.hasNext()) {
     const row = rows.next()
+    console.log(row)
     const lowQSKeyword = {
       campaignName: row['campaign.name'],
       adGroupName: row['ad_group.name'],
       keywordText: row['ad_group_criterion'],
       labels:
         row['ad_group_criterion.labels'] &&
-        row['ad_group_criterion.labels']?.trim() !== '--'
-          ? JSON.parse(row['ad_group_criterion.labels'])
+        row['ad_group_criterion.labels'].length
+          ? row['ad_group_criterion.labels']
           : [],
       uniqueId: [row['ad_group.id'], row['ad_group_criterion.criterion_id']],
       qualityScore: row['ad_group_criterion.quality_info.quality_score'],
